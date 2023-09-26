@@ -7,13 +7,13 @@ pipeline{
         stage('clone'){
             steps{
                 git url: 'https://github.com/tarunkumarpendem/shopizer.git',
-                    branch: 'master'
+                        branch: 'master'
             }
         }
         stage ('build') {
             steps {
-               sh 'mvn clean package'
-           }
+                sh 'mvn clean package'
+            }
         }
         stage('Build the Code') {
             steps {
@@ -21,19 +21,19 @@ pipeline{
                     sh script: 'mvn clean package sonar:sonar'
                 }
             }
-        stage('archiving-artifacts'){
-            steps{
-                archiveArtifacts artifacts: '**/target/*.jar', followSymlinks: false
+            stage('archiving-artifacts'){
+                steps{
+                    archiveArtifacts artifacts: '**/target/*.jar', followSymlinks: false
+                }
             }
-        }
-        stage('junit_reports'){
-            steps{
-                junit '**/surefire-reports/*.xml'
+            stage('junit_reports'){
+                steps{
+                    junit '**/surefire-reports/*.xml'
+                }
             }
-        }
-    }    
+        }    
 
-pipeline {
+        pipeline {
     agent {label 'OPENJDK-11-JDK'}
     triggers {
         pollSCM('0 17 * * *')
@@ -56,4 +56,23 @@ pipeline {
             }
         }
     }
-}
+}stage('Qodana') {
+            environment {
+                QODANA_TOKEN = credentials('qodana-token')
+            }
+            agent {
+                docker {
+                    args '''
+                        -v "${WORKSPACE}":/data/project
+                        --entrypoint=""
+                        '''
+                    image 'jetbrains/qodana-jvm'
+                }
+            }
+            when {
+                branch 'main'
+            }
+            steps {
+                sh '''qodana'''
+            }
+        }
